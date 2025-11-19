@@ -3,7 +3,8 @@ package com.codeit.jpastudy.chap04.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-@Getter @ToString
+@Getter
+@ToString(exclude = "department")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
