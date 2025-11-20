@@ -179,7 +179,37 @@ class AccountServiceTest {
 
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////
 
+    @Test
+    @DisplayName("Step3: 런타임 예외와 그렇지 않은 예외의 롤백 처리")
+    void testExceptionRollback() {
+        // given
+        BigDecimal fromBalance = fromAccount.getBalance();
+        BigDecimal toBalance = toAccount.getBalance();
+        BigDecimal transferAmount = BigDecimal.valueOf(15000);
+
+        // when
+        assertThrows(Exception.class, () -> {
+            accountService.transferWithCheckedException(
+                    fromAccount.getId(),
+                    toAccount.getId(),
+                    transferAmount
+            );
+        });
+
+        // then
+
+        // 롤백 확인
+        Account fromAfter = accountRepository.findById(fromAccount.getId()).orElseThrow();
+        Account toAfter = accountRepository.findById(toAccount.getId()).orElseThrow();
+        System.out.println("fromAfter = " + fromAfter);
+        System.out.println("toAfter = " + toAfter);
+
+        assertEquals(0, fromBalance.compareTo(fromAfter.getBalance()));
+        assertEquals(0, toBalance.compareTo(toAfter.getBalance()));
+
+    }
 
 
 

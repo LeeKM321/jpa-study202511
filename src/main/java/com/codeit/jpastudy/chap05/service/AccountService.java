@@ -1,6 +1,7 @@
 package com.codeit.jpastudy.chap05.service;
 
 import com.codeit.jpastudy.chap05.entity.Account;
+import com.codeit.jpastudy.chap05.exception.InsufficientBalanceException;
 import com.codeit.jpastudy.chap05.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -123,10 +124,40 @@ public class AccountService {
 
         // 이체 내역을 기록하고 싶다.
         // 기록 쪽에서 실패가 발생해도 입/출금은 정상 commit 되게 하고 싶으면 여기다 예외처리 하셔도 됩니다.
-        transferService.recordTransferWithNew(from, to, amount);
+//        transferService.recordTransferWithNew(from, to, amount);
+
+        testMethod(); // 트랜잭션 대상이 아님!
 
     }
 
+    @Transactional
+    public void testMethod() {
+        // 로그를 남기는 로직을 작성.
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+
+    @Transactional(rollbackFor = InsufficientBalanceException.class)
+    public void transferWithCheckedException(Long fromId, Long toId, BigDecimal amount) throws InsufficientBalanceException {
+        Account from = accountRepository.findById(fromId).orElseThrow(
+                () -> new RuntimeException("출금 계좌를 찾을 수 없습니다.")
+        );
+        Account to = accountRepository.findById(toId).orElseThrow(
+                () -> new RuntimeException("출금 계좌를 찾을 수 없습니다.")
+        );
+
+        // 계좌 이체
+        from.withdraw(amount);
+        accountRepository.save(from);
+
+        to.deposit(amount);
+        accountRepository.save(to);
+
+        if (from.getBalance().compareTo(amount) < 0) {
+            throw new InsufficientBalanceException("잔액이 부족합니다.");
+        }
+
+    }
 
 }
 
